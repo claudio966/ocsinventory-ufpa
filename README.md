@@ -9,7 +9,7 @@ For use this code, it's necessary the Docker's correlated package is installed i
 - The current directory of work contains all files of [here](https://github.com/claudio966/ocsinventory-ufpa/tree/master/docker-config/2.8). These files are essecial for configuration of containers.
 
 ## :information_source: How to Use:
-Once installed this preview packages and in possession of these [files here](https://gl.idc.ufpa.br/ocs_inventory-ufpa/2.8/-/tree/master/docker-config/2.8), execute this following comands inside a directory that contains the _config_ files aforementioned. 
+Once installed this preview packages and in possession of these [files here](https://github.com/claudio966/ocsinventory-ufpa/tree/master/docker-config/2.8), execute this following comands inside a directory that contains the _config_ files aforementioned. 
 
 :warning: Note, there is a _dot_ in the final of below command. Remember, this dot represent a special directory on GNU/Linux system, that is, the itself directory.
 ```console
