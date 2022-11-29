@@ -40,11 +40,13 @@ class ComponentsNotification
 				// Import css style 
 				$this->html_part_addition .= "
 				 " .  file_get_contents(__DIR__ . '/html_css_part.html') . "
-				<hr>
-				<center>
-					<h1> New Hardware Components Has been Added <h1>
-				</center>
-				<hr>";
+				<center><hr><div id='container'>
+					<div id='cabecalho'>
+					<div id='info-sistema'>
+					<h3> Hardware Components has been Removed </h3>
+					</div>
+					</div>
+					</div><hr></center>";
 		}
 		$this->html_part_addition .= "
 				<br>
@@ -56,7 +58,6 @@ class ComponentsNotification
 		foreach ($list_hardware[$reference_array] as $label => $value) {
 			$this->html_part_addition .= "<th class='nota'>$label</th>\n";
 		} 
-			$this->html_part_addition .= "<th class='nota'> STATUS </th>";
 		$this->html_part_addition .= "</tr></thead>\n<tbody><tr class='linhaPar linha'>";
 	
 		$id_asset = NULL; 
@@ -67,19 +68,7 @@ class ComponentsNotification
 					$this->html_part_addition .= "<td class='nota' nowrap='nowrap'> Uninformed </td>\n";
 					continue;
 				}
-				if ($feature == "ASSET") {
-					$sql = "SELECT TAG FROM accountinfo WHERE HARDWARE_ID = " . trim($value);
-					$result_id = mysqli_query($connection, $sql);
-					$id_asset = mysqli_fetch_array($result_id);
-
-					if (isset($id_asset)) {	
-						$this->html_part_addition .= "<td class='nota' nowrap='nowrap'>" . $id_asset['TAG'] . "</td><td class='nota'> <font color='green'> Added </font></td>\n";
-					} else {
-						$this->html_part_addition .= "<td class='nota' nowrap='nowrap'> Not Found </td><td class='nota'> <font color='green'> Added </font></td>\n";
-					}
-				} else {
-					$this->html_part_addition .= "<td class='nota'>$value</td>\n";
-				}
+				$this->html_part_addition .= "<td class='nota'>$value</td>\n";
 		} 
 			$this->html_part_addition .= "</tr><tr class='linhaPar linha'>";
 		}
@@ -92,11 +81,13 @@ class ComponentsNotification
 				// import css style
 				$this->html_part_remove .= "
 				" . file_get_contents(__DIR__ . '/html_css_part.html') ."
-					<hr>
-					<center>
-						<h1> Hardware Components has been Removed <h1>
-					</center>
-					<hr>";
+					<center><hr><div id='container'>
+					<div id='cabecalho'>
+					<div id='info-sistema'>
+					<h3> Hardware Components has been Removed </h3>
+					</div>
+					</div>
+					</div><hr></center>";
 		}
 		$this->html_part_remove .= "
 				<br>
@@ -107,7 +98,6 @@ class ComponentsNotification
 		foreach ($hardware_cache[$reference_array] as $label => $value) {
 			$this->html_part_remove .= "<th class='nota'>$label</th>\n";
 		}
-		$this->html_part_remove .= "<th class='nota'> STATUS </th>";
 		$this->html_part_remove .= "</tr>\n</thead><tbody><tr class='linhaPar linha'>";
 
 		$id_asset = NULL;
@@ -117,18 +107,7 @@ class ComponentsNotification
 					$this->html_part_remove .= "<td class='nota' nowrap='nowrap'> Uninformed </td>\n";
 					continue;
 				}
-				if ($feature == "ASSET") {
-					$sql = "SELECT TAG FROM id_assets_cache WHERE H_ID = " . trim($value);
-					$result_id = mysqli_query($connection, $sql);
-					$id_asset = mysqli_fetch_array($result_id);
-					if (isset($id_asset)) {
-						$this->html_part_remove .= "<td class='nota' nowrap='nowrap'>" . $id_asset['TAG'] . "</td><td class='nota'> <font color='#e31111'> Removed </font></td>\n";
-					} else {
-						$this->html_part_remove .= "<td class='nota' nowrap='nowrap'> Not Found </td><td class='nota' nowrap='nowrap'> <font color='#e31111'> Removed </font></td>\n";
-					}
-				} else {
-					$this->html_part_remove .= "<td class='nota' nowrap='nowrap'>$value</td>\n";
-				}
+				$this->html_part_remove .= "<td class='nota' nowrap='nowrap'>$value</td>\n";
 			}
 
 			$this->html_part_remove .= "</tr><tr class='linhaPar linha'>";
@@ -144,40 +123,48 @@ class ComponentsNotification
 	*/
 	public function get_cpus() {
 		$connection = db_connect();
-		$sql = "SELECT HARDWARE_ID, MANUFACTURER, TYPE FROM cpus WHERE HARDWARE_ID NOT IN 
-			(SELECT H_ID FROM cpus_cache);";
+		$sql = "SELECT accountinfo.TAG, cpus.MANUFACTURER, cpus.TYPE, 'Added' as STATUS FROM cpus, accountinfo 
+			WHERE accountinfo.TAG NOT IN (SELECT accountinfo.TAG FROM cpus_cache, accountinfo 
+			WHERE accountinfo.HARDWARE_ID = cpus_cache.H_ID) and 
+			accountinfo.HARDWARE_ID = cpus.HARDWARE_ID;";
 		$result_query = mysqli_query($connection, $sql);
 		
 		$added_cpus = array();
 		$asterix_amount = 0;
 		while ($item_cpu = mysqli_fetch_array($result_query)) {
-			if (array_key_exists($item_cpu['HARDWARE_ID'], $added_cpus)) {
-				$array_key = $item_cpu['HARDWARE_ID'] . str_repeat('*', ++$asterix_amount);
+			if (array_key_exists($item_cpu['TAG'], $removed_cpus)) {
+				$array_key = $item_cpu['TAG'] . str_repeat('*', ++$asterix_amount);
 			} else {
-				$array_key = $item_cpu['HARDWARE_ID'];
+				$array_key = $item_cpu['TAG'];
 				$asterix_amount = 0;
 			}
-				$added_cpus[$array_key]['MANUFACTURER'] = $item_cpu['MANUFACTURER'];
-				$added_cpus[$array_key]['TYPE'] = $item_cpu['TYPE'];
-				$added_cpus[$array_key]['ASSET'] = $item_cpu['HARDWARE_ID'];
-		}
 
+			$added_cpus[$array_key]['ASSET'] = $item_cpu['TAG'];
+			$added_cpus[$array_key]['MANUFACTURER'] = $item_cpu['MANUFACTURER'];
+			$added_cpus[$array_key]['TYPE'] = $item_cpu['TYPE'];
+			$added_cpus[$array_key]['STATUS'] = $item_cpu['STATUS'];
+		}
 		$removed_cpus = array();
-		$sql_cache = "SELECT H_ID, MANUFACTURER, TYPE FROM cpus_cache WHERE H_ID NOT IN
-			(SELECT HARDWARE_ID FROM cpus);";
+		$sql_cache = "SELECT id_assets_cache.TAG, cpus_cache.MANUFACTURER, cpus_cache.TYPE, 'Removed' as STATUS 
+				FROM cpus_cache, id_assets_cache WHERE id_assets_cache.TAG NOT IN 
+				(SELECT id_assets_cache.TAG FROM cpus, id_assets_cache 
+				WHERE id_assets_cache.H_ID = cpus.HARDWARE_ID) and 
+				id_assets_cache.H_ID = cpus_cache.H_ID;";
 		$result_query_cache = mysqli_query($connection, $sql_cache);
 
 		$asterix_amount = 0;
 		while ($item_cpu = mysqli_fetch_array($result_query_cache)) {
-			if (array_key_exists($item_cpu['H_ID'], $removed_cpus)) {
-				$array_key = $item_cpu['H_ID'] . str_repeat('*', ++$asterix_amount);
+			if (array_key_exists($item_cpu['TAG'], $removed_cpus)) {
+				$array_key = $item_cpu['TAG'] . str_repeat('*', ++$asterix_amount);
 			} else {
-				$array_key = $item_cpu['H_ID'];
+				$array_key = $item_cpu['TAG'];
 				$asterix_amount = 0;
 			}
+
+			$removed_cpus[$array_key]['ASSET'] = $item_cpu['TAG'];
 			$removed_cpus[$array_key]['MANUFACTURER'] = $item_cpu['MANUFACTURER'];
 			$removed_cpus[$array_key]['TYPE'] = $item_cpu['TYPE'];
-			$removed_cpus[$array_key]['ASSET'] = $item_cpu['H_ID'];
+			$removed_cpus[$array_key]['STATUS'] = $item_cpu['STATUS'];
 		}
 
 		if ($added_cpus != NULL) {
@@ -201,55 +188,56 @@ class ComponentsNotification
 	*/
 	public function get_memories() {
 		$connection = db_connect();
-		$sql = "SELECT HARDWARE_ID, TYPE, CAPACITY FROM memories WHERE HARDWARE_ID NOT IN 
-			(SELECT H_ID FROM memories_cache);";
+		$sql = "SELECT accountinfo.TAG, concat(memories.CAPACITY, ' MB') as CAPACITY, memories.TYPE, 'Added' as STATUS 
+			FROM memories, accountinfo 
+			WHERE accountinfo.TAG NOT IN (SELECT accountinfo.TAG FROM memories_cache, accountinfo 
+			WHERE accountinfo.HARDWARE_ID = memories_cache.H_ID) and 
+			accountinfo.HARDWARE_ID = memories.HARDWARE_ID and capacity > 1024;";
 		$result_query = mysqli_query($connection, $sql);
 		
 		$added_memories = array();
 		$asterix_amount = 0;
 		while ($item_memory = mysqli_fetch_array($result_query)) {
-			if ($item_memory['CAPACITY'] == NULL or $item_memory['CAPACITY'] < 1024) {
-				continue;
-			}
-			if (array_key_exists($item_memory['HARDWARE_ID'], $added_memories)){
-				$array_key = $item_memory['HARDWARE_ID'] . str_repeat("*", ++$asterix_amount);
+			if (array_key_exists($item_memory['TAG'], $added_memories)) {
+				$array_key = $item_memory['TAG'] . str_repeat("*", ++$asterix_amount);
 			} else {
-				$array_key = $item_memory['HARDWARE_ID'];
+				$array_key = $item_memory['TAG'];
 				$asterix_amount = 0;
 			}
+			$added_memories[$array_key]['ASSET'] = $item_memory['TAG'];
 			$added_memories[$array_key]['TYPE'] = $item_memory['TYPE'];
-			$added_memories[$array_key]['CAPACITY (MB)'] = $item_memory['CAPACITY'];
-			$added_memories[$array_key]['ASSET'] = $item_memory['HARDWARE_ID'];
+			$added_memories[$array_key]['CAPACITY'] = $item_memory['CAPACITY'];
+			$added_memories[$array_key]['STATUS'] = $item_memory['STATUS'];
 		}
 
-		$sql_cache = "SELECT H_ID, TYPE, CAPACITY FROM memories_cache WHERE H_ID NOT IN
-			(SELECT HARDWARE_ID FROM memories);";
+		$sql_cache = "SELECT id_assets_cache.TAG, concat(memories_cache.CAPACITY, ' MB') as CAPACITY, 
+				memories_cache.TYPE, 'Removed' as STATUS FROM memories_cache, id_assets_cache 
+				WHERE id_assets_cache.TAG NOT IN 
+				(SELECT id_assets_cache.TAG FROM memories, id_assets_cache 
+				WHERE id_assets_cache.H_ID = memories.HARDWARE_ID) and id_assets_cache.H_ID = memories_cache.H_ID 
+				and CAPACITY > 1024;";
 		$result_query_cache = mysqli_query($connection, $sql_cache);
 
 		$removed_memories = array();
 		$asterix_amount = 0;
 		while ($item_memory = mysqli_fetch_array($result_query_cache)) {
-			if ($item_memory['CAPACITY'] == NULL or $item_memory['CAPACITY'] < 1024) {
-				continue;
-			}
-			if (array_key_exists($item_memory['H_ID'], $removed_memories)) {
-				$array_key = $item_memory['H_ID'] . str_repeat("*", ++$asterix_amount);
+			if (array_key_exists($item_memory['TAG'], $removed_memories)) {
+				$array_key = $item_memory['TAG'] . str_repeat("*", ++$asterix_amount);
 			} else {
-				$array_key = $item_memory['H_ID'];
+				$array_key = $item_memory['TAG'];
 				$asterix_amount = 0;
 			}
+			$removed_memories[$array_key]['ASSET'] = $item_memory['TAG'];
 			$removed_memories[$array_key]['TYPE'] = $item_memory['TYPE'];
 			$removed_memories[$array_key]['CAPACITY (MB)'] = $item_memory['CAPACITY'];
-			$removed_memories[$array_key]['ASSET'] = $item_memory['H_ID'];
+			$removed_memories[$array_key]['STATUS'] = $item_memory['STATUS'];
 		}
 
 		if ($added_memories != NULL) {
-			//$added_memories = filter_array_cells($added_memories);
 			$this->get_html_info_addition($added_memories, $connection, $hard_component = "Memory(ies)");
 		}
 
 		if ($removed_memories != NULL) {
-			//$removed_memories = filter_array_cells($removed_memories);
 			$this->get_html_info_removed($removed_memories, $connection, $hard_component = "Memory(ies)");
 		}
 
@@ -269,42 +257,51 @@ class ComponentsNotification
 	*/
 	public function get_monitors() {
 		$connection = db_connect();
-		$sql = "SELECT HARDWARE_ID, MANUFACTURER, DESCRIPTION FROM monitors WHERE HARDWARE_ID NOT IN
-			(SELECT H_ID FROM monitors_cache);";
+		$sql = "SELECT accountinfo.TAG, monitors.MANUFACTURER, monitors.DESCRIPTION, 'Added' as Status 
+				FROM monitors, accountinfo 
+				WHERE accountinfo.TAG NOT IN (SELECT accountinfo.TAG FROM monitors_cache, accountinfo 
+				WHERE accountinfo.HARDWARE_ID = monitors_cache.H_ID) and 
+				accountinfo.HARDWARE_ID = monitors.HARDWARE_ID;";
+
 		$result_query = mysqli_query($connection, $sql);
 		
 		$added_monitors = array();
 		$asterix_amount = 0;
 		while($item_monitor = mysqli_fetch_array($result_query)) {
-			if (array_key_exists($item_monitor['HARDWARE_ID'], $added_monitors)) {
-				$array_key = $item_monitor['HARDWARE_ID'] . str_repeat("*", ++$asterix_amount);
+			if (array_key_exists($item_monitor['TAG'], $added_monitors)) {
+				$array_key = $item_monitor['TAG'] . str_repeat("*", ++$asterix_amount);
 			} else {
-				$array_key = $item_monitor['HARDWARE_ID'];
+				$array_key = $item_monitor['TAG'];
 				$asterix_amount = 0;
 			}
 			
 			$added_monitors[$array_key]['MANUFACTURER'] = $item_monitor['MANUFACTURER'];		
 			$added_monitors[$array_key]['DESCRIPTION'] = $item_monitor['DESCRIPTION'];		
 			$added_monitors[$array_key]['ASSET'] = $item_monitor['HARDWARE_ID'];		
+			$added_monitors[$array_key]['STATUS'] = $item_monitor['STATUS'];		
 		}
 		
-		$sql_cache = "SELECT H_ID, MANUFACTURER, DESCRIPTION FROM monitors_cache WHERE H_ID NOT IN
-			(SELECT HARDWARE_ID FROM monitors);";
+		$sql_cache = "SELECT id_assets_cache.TAG, monitors_cache.MANUFACTURER, monitors_cache.DESCRIPTION, 
+				'Removed' as STATUS FROM monitors_cache, id_assets_cache 
+				WHERE id_assets_cache.TAG NOT IN 
+				(SELECT id_assets_cache.TAG FROM monitors, id_assets_cache 
+				WHERE id_assets_cache.H_ID = monitors.HARDWARE_ID) and 
+				id_assets_cache.H_ID = monitors_cache.H_ID;";
 		$result_query_cache = mysqli_query($connection, $sql_cache);
 
 		$removed_monitors = array();
 		$asterix_amount = 0;
 		while ($item_monitor = mysqli_fetch_array($result_query_cache)) {
-			if (array_key_exists($item_monitor['H_ID'], $removed_monitors)) {
-				$array_key = $item_monitor['H_ID'] . str_repeat("*", ++$asterix_amount);
+			if (array_key_exists($item_monitor['TAG'], $removed_monitors)) {
+				$array_key = $item_monitor['TAG'] . str_repeat("*", ++$asterix_amount);
 			} else {
-				$array_key = $item_monitor['H_ID'];
+				$array_key = $item_monitor['TAG'];
 				$asterix_amount = 0;
 			}
 			
 			$removed_monitors[$array_key]['MANUFACTURER'] = $item_monitor['MANUFACTURER'];
 			$removed_monitors[$array_key]['DESCRIPTION'] = $item_monitor['DESCRIPTION'];		
-			$removed_monitors[$array_key]['ASSET'] = $item_monitor['H_ID'];		
+			$removed_monitors[$array_key]['ASSET'] = $item_monitor['TAG'];		
 		}
 		
 
@@ -332,51 +329,51 @@ class ComponentsNotification
 	*/
 	public function get_storages() {
 		$connection = db_connect();
-		$sql = "SELECT HARDWARE_ID, MANUFACTURER, DISKSIZE, MODEL FROM storages WHERE HARDWARE_ID NOT IN
-			(SELECT H_ID FROM storages_cache);";
+		$sql = "SELECT accountinfo.TAG, storages.MANUFACTURER, storages.MODEL, concat(storages.DISKSIZE, ' MB') as DISKSIZE, 
+			'Added' as STATUS FROM storages, accountinfo 
+			WHERE accountinfo.TAG NOT IN (SELECT accountinfo.TAG 
+			FROM storages_cache, accountinfo WHERE accountinfo.HARDWARE_ID = storages_cache.H_ID) 
+			and accountinfo.HARDWARE_ID = storages.HARDWARE_ID and DISKSIZE > 32000;";
 		$result_query = mysqli_query($connection, $sql);
 		
 		$added_storages = array();
 		$asterix_amount = 0;
 		while ($item_storages = mysqli_fetch_array($result_query)) {
-			if ($item_storages['DISKSIZE'] < 16000) {
-				continue;
-			}
-			if (array_key_exists($item_storages['HARDWARE_ID'], $added_storages)) {
-				$array_key = $item_storages['HARDWARE_ID'] . str_repeat("*", ++$asterix_amount);
+			if (array_key_exists($item_storages['TAG'], $added_storages)) {
+				$array_key = $item_storages['TAG'] . str_repeat("*", ++$asterix_amount);
 			} else {
-				$array_key = $item_storages['HARDWARE_ID'];
+				$array_key = $item_storages['TAG'];
 				$asterix_amount = 0;
 			}
 
+			$added_storages[$array_key]['ASSET'] = $item_storages['TAG'];
 			$added_storages[$array_key]['MANUFACTURER'] = $item_storages['MANUFACTURER'];
 			$added_storages[$array_key]['DISKSIZE (MB)'] = $item_storages['DISKSIZE'];
 			$added_storages[$array_key]['MODEL'] = $item_storages['MODEL'];
-			$added_storages[$array_key]['ASSET'] = $item_storages['HARDWARE_ID'];
+			$added_storages[$array_key]['STATUS'] = $item_storages['STATUS'];
 		}
 		
-		$sql_cache = "SELECT H_ID, MANUFACTURER, DISKSIZE, MODEL FROM storages_cache WHERE H_ID NOT IN
-				(SELECT HARDWARE_ID FROM storages);";
+		$sql_cache = "SELECT id_assets_cache.TAG, storages_cache.MANUFACTURER, concat(storages_cache.DISKSIZE, ' MB') as DISKSIZE,
+ 				storages_cache.MODEL, 'Removed' as STATUS FROM storages_cache, id_assets_cache 
+				WHERE id_assets_cache.TAG NOT IN (SELECT id_assets_cache.TAG 
+				FROM storages, id_assets_cache WHERE id_assets_cache.H_ID = storages.HARDWARE_ID) and 
+				id_assets_cache.H_ID = storages_cache.H_ID and DISKSIZE > 32000;";
 		$result_query_cache = mysqli_query($connection, $sql_cache);
 		
 		$removed_storages = array();
 		$asterix_amount = 0;
 		while ($item_storages = mysqli_fetch_array($result_query_cache)) {
-			// check if this device is which really is
-			if ($item_storages['DISKSIZE'] < 16000) {
-				continue;
-			}
-			if (array_key_exists($item_storages['H_ID'], $removed_storages)) {
-				$array_key = $item_storages['H_ID'] . str_repeat("*", ++$asterix_amount);
+			if (array_key_exists($item_storages['TAG'], $removed_storages)) {
+				$array_key = $item_storages['TAG'] . str_repeat("*", ++$asterix_amount);
 			} else {
-				$array_key = $item_storages['H_ID'];
+				$array_key = $item_storages['TAG'];
 				$asterix_amount = 0;
 			}
 
 			$removed_storages[$array_key]['MANUFACTURER'] = $item_storages['MANUFACTURER'];
 			$removed_storages[$array_key]['DISKSIZE (MB)'] = $item_storages['DISKSIZE'];
 			$removed_storages[$array_key]['MODEL'] = $item_storages['MODEL'];
-			$removed_storages[$array_key]['ASSET'] = $item_storages['H_ID'];
+			$removed_storages[$array_key]['ASSET'] = $item_storages['TAG'];
 		}
 		
 		if ($added_storages != NULL) {
@@ -401,42 +398,48 @@ class ComponentsNotification
 	*/
 	public function get_videos() {
 		$connection = db_connect();
-		$sql = "SELECT HARDWARE_ID, NAME, MEMORY FROM videos WHERE HARDWARE_ID NOT IN
-			(SELECT H_ID FROM storages_cache);";
+		$sql = "SELECT accountinfo.TAG, videos.NAME, videos.MEMORY, 'Added' as STATUS 
+			FROM videos, accountinfo WHERE accountinfo.TAG NOT IN (SELECT accountinfo.TAG FROM videos_cache, accountinfo 
+			WHERE accountinfo.HARDWARE_ID = videos_cache.H_ID) 
+			and accountinfo.HARDWARE_ID = videos.HARDWARE_ID;";
 		$result_query = mysqli_query($connection, $sql);
 
 		$added_videos = array();
 		$asterix_amount = 0;
 		while($item_videos = mysqli_fetch_array($result_query)) {
-			if (array_key_exists($item_videos['HARDWARE_ID'], $added_videos)) {
-				$array_key = $item_videos['HARDWARE_ID'] . str_repeat("*", ++$asterix_amount);
+			if (array_key_exists($item_videos['TAG'], $added_videos)) {
+				$array_key = $item_videos['TAG'] . str_repeat("*", ++$asterix_amount);
 			} else {
-				$array_key = $item_videos['HARDWARE_ID'];
+				$array_key = $item_videos['TAG'];
 				$asterix_amount = 0;
 			}
+			$added_videos[$array_key]['ASSET'] = $item_videos['TAG'];		
 			$added_videos[$array_key]['NAME'] = $item_videos['NAME'];		
 			$added_videos[$array_key]['MEMORY'] = $item_videos['MEMORY'];		
-			$added_videos[$array_key]['ASSET'] = $item_videos['HARDWARE_ID'];		
+			$added_videos[$array_key]['STATUS'] = $item_videos['STATUS'];		
 	
 		}
 
-		$sql_cache = "SELECT H_ID, NAME, MEMORY FROM videos_cache WHERE H_ID NOT IN
-				(SELECT HARDWARE_ID FROM videos);";
+		$sql_cache = "SELECT id_assets_cache.TAG, videos_cache.NAME, concat(videos_cache.MEMORY, ' MB') as MEMORY, 
+				'Removed' as STATUS FROM videos_cache, id_assets_cache WHERE id_assets_cache.TAG NOT IN 
+				(SELECT id_assets_cache.TAG FROM videos, id_assets_cache 
+				WHERE id_assets_cache.H_ID = videos.HARDWARE_ID) and 
+				id_assets_cache.H_ID = videos_cache.H_ID;";
 		$result_query_cache = mysqli_query($connection, $sql_cache);
 
 		$removed_videos = array();
 		$asterix_amount = 0;
 		while($item_videos = mysqli_fetch_array($result_query_cache)) {
-			if (array_key_exists($item_videos['H_ID'], $removed_videos)) {
-				$array_key = $item_videos['H_ID'] . str_repeat("*", ++$asterix_amount);
+			if (array_key_exists($item_videos['TAG'], $removed_videos)) {
+				$array_key = $item_videos['TAG'] . str_repeat("*", ++$asterix_amount);
 			} else {
-				$array_key = $item_videos['H_ID'];
+				$array_key = $item_videos['TAG'];
 				$asterix_amount = 0;
 			}	
 			
 			$removed_videos[$array_key]['NAME'] = $item_videos['NAME'];		
 			$removed_videos[$array_key]['MEMORY'] = $item_videos['MEMORY'];		
-			$removed_videos[$array_key]['ASSET'] = $item_videos['H_ID'];		
+			$removed_videos[$array_key]['ASSET'] = $item_videos['TAG'];		
 		}
 		
 		
@@ -468,4 +471,3 @@ class ComponentsNotification
 		mysqli_multi_query($connection, $sql);
 	}
 }
-
